@@ -1,0 +1,1 @@
+gimp_segmentation_plugin
