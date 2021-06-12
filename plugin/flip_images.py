@@ -1,12 +1,26 @@
+# helpfull links
+# https://stackoverflow.com/questions/58343148/gimp-python-plugin-to-load-2-images-as-layers
+
+
 from gimpfu import *
 import glob
 import os
 import gtk
+# import Gtk
 
 
 
 
 class PyApp(gtk.Window):
+    cur_img_num = 0
+    image_count = 0
+    image_list = []
+    image_count = 0
+    image_dir = ''
+    mask_dir = ''
+    mask_path = ''
+    img = None
+    layer = None
 
 
     def __init__(self):
@@ -14,12 +28,18 @@ class PyApp(gtk.Window):
         self.set_title("Buttons")
         self.set_size_request(250, 200)
         self.set_position(gtk.WIN_POS_CENTER)
+        self.set_keep_above(True)
 
-        image_btn = gtk.FileChooserButton('open image folder')
-        mask_btn = gtk.FileChooserButton('open mask folder')
-        pdb.gimp_message('got_path')
-        image_dir = image_btn.connect("file-set", self.get_path)
-        mask_dir = mask_btn.connect("file-set", self.get_path)
+        # image_btn = gtk.FileChooserButton('open image folder')
+
+        image_btn = gtk.FileChooserButton(title="open image file") # should be able to use Gtk.FileChooserAction.SELECT_FOLDER to open folder instead
+        mask_btn = gtk.FileChooserButton(title='open mask file')
+
+        image_btn.connect("file-set", self.get_image_path_n_list)
+        mask_btn.connect("file-set", self.get_mask_dir)
+
+        image_btn.set_size_request(180, 40)
+        mask_btn.set_size_request(180, 40)
 
         btn_next = gtk.Button("Next")
         btn_prev = gtk.Button("Previous")
@@ -43,46 +63,125 @@ class PyApp(gtk.Window):
 
 
 
-    def load_image(image_path, mask_path, image_number = 0 ):
 
-        image_list = glob.glob(image_path+'/*')
+    def load_image(self):
 
-        one_image = image_list[image_number]
+        one_image = PyApp.image_list[PyApp.cur_img_num]
+
+        pdb.gimp_message('one'+one_image)
 
         file_name = os.path.basename(one_image)
-        mask_path = os.path.join(mask_dir,file_name)
+
+        pdb.gimp_message(PyApp.mask_dir)
+
+        PyApp.mask_path = os.path.join(PyApp.mask_dir,file_name)
+        pdb.gimp_message(PyApp.mask_path)
 
 
-        img = gimp.Image(1000, 1000)
-        pdb.gimp_display_new(img)
+        PyApp.img = gimp.Image(1000, 1000)
+        # pdb.gimp_display_new(img)
 
-        for f, name, pos in ((one_image, "Image", 1), (mask_path, "Mask", 0)):
-            layer = pdb.gimp_file_load_layer(img, f)
-            pdb.gimp_layer_set_name(layer, name)
-            pdb.gimp_image_insert_layer(img, layer, None, pos)
-            pdb.gimp_message(img.layers)
+        for f, name, pos in ((one_image, "Image", 1), (PyApp.mask_path, "Mask", 0)):
+            PyApp.layer = pdb.gimp_file_load_layer(PyApp.img, f)
+            pdb.gimp_layer_set_name(PyApp.layer, name)
+            pdb.gimp_image_insert_layer(PyApp.img, PyApp.layer, None, pos)
+            # pdb.gimp_message(img.layers)
+
 
 
         image = gimp.image_list()[0]
         active_layer = pdb.gimp_image_get_active_layer(image)
         pdb.gimp_layer_set_opacity(active_layer, 60)
 
+        width = active_layer.width
+        height = active_layer.height
+
+
+
+        pdb.gimp_image_resize_to_layers(image)
+        pdb.gimp_display_new(PyApp.img)
+
+            # delete image display and image
+
+
+        # pdb.gimp_display_delete(img)
+        # pdb.gimp_message('made it')
+        # pdb.gimp_image_resize(width,height)
+        # pdb.gimp_image_resize(width,height)
+
         # this will save a layer
-        # pdb.gimp_file_save(img, layer, '/Users/nicholaswright/Documents/gimp_segmentation_plugin/sample data/colour mask resave/tq84_write_text.png', '?')
 
 
-    def get_path(self,button):
+    def get_mask_dir(self,button):
         path = os.path.dirname(button.get_filename())
         pdb.gimp_message(path)
-        return path
+        PyApp.mask_dir = path
+        # return path
+
+    def get_image_path_n_list(self,button):
+        # this func turns file path into folder path
+        # then calls calls get image list
+        # convert selected image in to dir path
+        image_path = os.path.dirname(button.get_filename())
+        pdb.gimp_message(image_path)
+        # pdb.gimp_message('got image path')
+        self.get_img_list(image_path)
+        PyApp.image_dir
+        # return image_path
+
+    def get_img_list(self,image_path):
+        # this func sets file list and file count
+        PyApp.image_list = glob.glob(image_path+'/*')
+        pdb.gimp_message('got list')
+        PyApp.image_count = len(PyApp.image_list)
+        pdb.gimp_message('image count '+str(PyApp.image_count))
+
 
     def load_next_image(self,button):
-        pdb.gimp_message('next')
-        load_image(image_dir,mask_dir)
-        get_image_list(image_dir)
+        # the next button has been clicked so inciment cur_img_num by one
+        pdb.gimp_message('next clicked')
+        # save mask
+        if PyApp.img != None:
+            pdb.gimp_message(PyApp.layer)
+            pdb.gimp_file_save(PyApp.img, PyApp.layer, PyApp.mask_path, '?')
+
+        pdb.gimp_message(PyApp.cur_img_num)
+        if PyApp.cur_img_num < PyApp.image_count-1:
+            # self.remove_image()
+            PyApp.cur_img_num+=1
+            pdb.gimp_message('next image')
+            self.load_image()
+        else:
+            pdb.gimp_message('no more images')
+        pdb.gimp_message(PyApp.cur_img_num)
+
+
+
 
     def load_prev_image(self,button):
-        pdb.gimp_message('prev')
+        pdb.gimp_message('prev clicked')
+        if PyApp.cur_img_num != 0:
+            PyApp.cur_img_num-=1
+            pdb.gimp_message('prev image')
+            self.load_image()
+        else:
+            pdb.gimp_message('no more images')
+        pdb.gimp_message(PyApp.cur_img_num)
+
+# crazy hack to remove images
+    def remove_image():
+        pdb.gimp_message('remove')
+        # delete image display and image
+        for displayID in range(1,image.ID+50):
+            display=gimp._id2display(displayID)
+            if isinstance(display,gimp.Display):
+                #print 'Image: %d; display %d' % (image.ID,displayID)
+                break
+        if not display:
+            pdb.gimp_message('nothing to remove')
+        gimp.delete(display)
+
+
 
 
 
