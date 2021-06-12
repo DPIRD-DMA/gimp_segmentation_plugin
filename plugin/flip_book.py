@@ -1,19 +1,6 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-# Draw arrows in GIMP, using the selection as a guide for where to draw.
-#
-# Copyright 2010,2011 by Akkana Peck, http://www.shallowsky.com/software/
-# plus contributions from Robert Brizard.
-# You may use and distribute this plug-in under the terms of the GPL.
-
 from gimpfu import *
-# import gtk, pango
-# from gobject import timeout_add
 import glob
 import os
-# import numpy as np
-
 
 def flip_images(image_dir,mask_dir):
     image_list = glob.glob(image_dir+"/*")
