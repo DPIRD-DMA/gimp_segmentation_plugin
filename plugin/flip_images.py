@@ -16,8 +16,8 @@ class PyApp(gtk.Window):
     image_count = 0
     image_list = []
     image_count = 0
-    image_dir = ''
-    mask_dir = ''
+    # image_dir = ''
+    # mask_dir = ''
     mask_path = ''
     img = None
     layer = None
@@ -25,21 +25,22 @@ class PyApp(gtk.Window):
 
     def __init__(self):
         super(PyApp, self).__init__()
-        self.set_title("Buttons")
-        self.set_size_request(250, 200)
+        self.set_title("Image flipper")
+        self.set_size_request(240, 190)
         self.set_position(gtk.WIN_POS_CENTER)
         self.set_keep_above(True)
 
         # image_btn = gtk.FileChooserButton('open image folder')
 
-        image_btn = gtk.FileChooserButton(title="open image file") # should be able to use Gtk.FileChooserAction.SELECT_FOLDER to open folder instead
-        mask_btn = gtk.FileChooserButton(title='open mask file')
 
-        image_btn.connect("file-set", self.get_image_path_n_list)
-        mask_btn.connect("file-set", self.get_mask_dir)
+        # image_btn = gtk.FileChooserButton(title="open image file") # should be able to use Gtk.FileChooserAction.SELECT_FOLDER to open folder instead
+        # mask_btn = gtk.FileChooserButton(title='open mask file')
 
-        image_btn.set_size_request(180, 40)
-        mask_btn.set_size_request(180, 40)
+        # image_btn.connect("file-set", self.get_image_path_n_list)
+        # mask_btn.connect("file-set", self.get_mask_dir)
+
+        # image_btn.set_size_request(200, 40)
+        # mask_btn.set_size_request(200, 40)
 
         btn_next = gtk.Button("Next")
         btn_prev = gtk.Button("Previous")
@@ -51,16 +52,30 @@ class PyApp(gtk.Window):
         btn_prev.set_size_request(80, 40)
         # btn_close.set_size_request(20, 20)
         fixed = gtk.Fixed()
-        fixed.put(btn_next, 20, 20)
-        fixed.put(btn_prev, 130, 20)
-        fixed.put(image_btn,20,80)
-        fixed.put(mask_btn,20,120)
+        fixed.put(btn_next, 20, 130)
+        fixed.put(btn_prev, 140, 130)
+        # fixed.put(image_btn,20,20)
+        # fixed.put(mask_btn,20,70)
         # fixed.put(btn_close, 20, 80)
         self.connect("destroy", gtk.main_quit)
         self.add(fixed)
         self.show_all()
 
+        PyApp.image_dir = self.open_file(open_title='Select image folder')
+        pdb.gimp_message(PyApp.image_dir)
+        PyApp.image_list,PyApp.image_count = get_img_list(image_dir = PyApp.image_dir)
+        # PyApp.mask_dir = self.open_file(open_title='Select coloured mask folder')
 
+
+
+    def open_file(self,open_title):
+        dlg = gtk.FileChooserDialog(open_title,
+        None, gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+        response = dlg.run()
+        dir = dlg.get_filename()
+        # pdb.gimp_message(dir)
+        dlg.destroy()
+        return dir
 
 
 
@@ -112,29 +127,31 @@ class PyApp(gtk.Window):
         # this will save a layer
 
 
-    def get_mask_dir(self,button):
-        path = os.path.dirname(button.get_filename())
-        pdb.gimp_message(path)
-        PyApp.mask_dir = path
+    # def get_mask_dir(self,button):
+    #     path = os.path.dirname(button.get_filename())
+    #     pdb.gimp_message(path)
+    #     PyApp.mask_dir = path
         # return path
 
-    def get_image_path_n_list(self,button):
-        # this func turns file path into folder path
-        # then calls calls get image list
-        # convert selected image in to dir path
-        image_path = os.path.dirname(button.get_filename())
-        pdb.gimp_message(image_path)
-        # pdb.gimp_message('got image path')
-        self.get_img_list(image_path)
-        PyApp.image_dir
-        # return image_path
+    # def get_image_path_n_list(self,button):
+    #     # this func turns file path into folder path
+    #     # then calls calls get image list
+    #     # convert selected image in to dir path
+    #     image_path = os.path.dirname(button.get_filename())
+    #     pdb.gimp_message(image_path)
+    #     # pdb.gimp_message('got image path')
+    #     self.get_img_list(image_path)
+    #     PyApp.image_dir
+    #     # return image_path
 
-    def get_img_list(self,image_path):
+    def get_img_list(self,image_dir):
         # this func sets file list and file count
-        PyApp.image_list = glob.glob(image_path+'/*')
+        pdb.gimp_message('start')
+        image_list = glob.glob(image_dir+'/*')
         pdb.gimp_message('got list')
-        PyApp.image_count = len(PyApp.image_list)
-        pdb.gimp_message('image count '+str(PyApp.image_count))
+        image_count = len(image_list)
+        pdb.gimp_message('image count '+str(image_count))
+        return [image_list,image_count]
 
 
     def load_next_image(self,button):
@@ -189,6 +206,8 @@ def flip_images():
 
     PyApp()
     gtk.main()
+
+
 
 
 
