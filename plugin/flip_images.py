@@ -1,11 +1,25 @@
+from __future__ import division
 # helpfull links
 # https://stackoverflow.com/questions/58343148/gimp-python-plugin-to-load-2-images-as-layers
-
 
 from gimpfu import *
 import glob
 import os
-import gtk
+import gtk,gobject
+#
+
+def progress_timeout(pbobj):
+    if PyApp.cur_img_num > 0:
+
+        # new_val = pbobj.pb.get_fraction() + 0.01
+        new_val = PyApp.cur_img_num/PyApp.image_count
+        # pdb.gimp_message(PyApp.cur_img_num)
+        # pdb.gimp_message(PyApp.image_count)
+        # pdb.gimp_message(new_val)
+        # pdb.gimp_message('done')
+        pbobj.pb.set_fraction(new_val)
+        pbobj.pb.set_text(str(new_val*100)+" % completed")
+    return True
 
 class PyApp(gtk.Window):
     cur_img_num = -1
@@ -20,10 +34,13 @@ class PyApp(gtk.Window):
     first_build = True
     first_img_load = True
 
+
+
+
     def __init__(self):
         super(PyApp, self).__init__()
         self.set_title("Image flipper")
-        self.set_size_request(240, 90)
+        self.set_size_request(240, 110)
         self.set_position(gtk.WIN_POS_CENTER)
         self.set_keep_above(True)
 
@@ -37,8 +54,21 @@ class PyApp(gtk.Window):
         btn_prev.set_size_request(80, 40)
 
         fixed = gtk.Fixed()
-        fixed.put(btn_next, 20, 20)
-        fixed.put(btn_prev, 140, 20)
+
+        self.pb = gtk.ProgressBar()
+        self.pb.set_text("Progress")
+        self.pb.set_fraction(0.0)
+    	fixed.put(self.pb,10,70)
+        self.timer = gobject.timeout_add (100, progress_timeout, self)
+        # self.connect("destroy", gtk.main_quit)
+        # self.show_all()
+
+
+
+        fixed.put(btn_next, 140, 20)
+        fixed.put(btn_prev, 20, 20)
+
+
 
         self.connect("destroy", gtk.main_quit)
         self.add(fixed)
@@ -50,23 +80,16 @@ class PyApp(gtk.Window):
         self.get_img_list()
         PyApp.mask_dir = self.open_file(open_title='Select coloured mask folder')
 
-
-
-
-
     def open_file(self,open_title):
         dlg = gtk.FileChooserDialog(open_title,
         None, gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
         response = dlg.run()
         dir = dlg.get_filename()
-        # pdb.gimp_message(dir)
         dlg.destroy()
         return dir
 
 
-
     def load_image(self):
-
         one_image = PyApp.image_list[PyApp.cur_img_num]
 
         pdb.gimp_message('one'+one_image)
@@ -115,12 +138,19 @@ class PyApp(gtk.Window):
 
     def save_mask_then_remove_all(self):
         if PyApp.img != None:
-            pdb.gimp_message(PyApp.image.layers)
+            # pdb.gimp_message(PyApp.image.layers)
+            # remove background image from image
             pdb.gimp_image_remove_layer(PyApp.img,PyApp.image.layers[1])
+            # foceing into indexed colour mode to limit colours
+            pdb.gimp_image_convert_indexed(PyApp.img, NO_DITHER, 4, 20, FALSE, FALSE, "Image Segmentation Palette.txt")
+            # convert back into RGB to save it out
+            pdb.gimp_image_convert_rgb(PyApp.image)
+            # save mask
             pdb.gimp_file_save(PyApp.img, PyApp.layer, PyApp.mask_path, '?')
-            pdb.gimp_message('saved')
+            # pdb.gimp_message('saved')
+            # remove mask from image
             pdb.gimp_image_remove_layer(PyApp.img,PyApp.image.layers[0])
-            pdb.gimp_message('removed')
+            # pdb.gimp_message('removed')
 
     def load_next_image(self,button):
         # the next button has been clicked so inciment cur_img_num by one
