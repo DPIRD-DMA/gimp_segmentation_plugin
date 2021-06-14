@@ -7,19 +7,19 @@ import glob
 import os
 import gtk
 
-
 class PyApp(gtk.Window):
-    cur_img_num = 0
+    cur_img_num = -1
     image_count = 0
     image_list = []
     image_count = 0
     mask_path = ''
     image_dir = ''
+    mask_dir = ''
     img = None
     layer = None
     image = None
     first_build = True
-
+    first_img_load = True
 
     def __init__(self):
         super(PyApp, self).__init__()
@@ -53,6 +53,8 @@ class PyApp(gtk.Window):
 
 
 
+
+
     def open_file(self,open_title):
         dlg = gtk.FileChooserDialog(open_title,
         None, gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
@@ -77,11 +79,11 @@ class PyApp(gtk.Window):
         PyApp.mask_path = os.path.join(PyApp.mask_dir,file_name)
         pdb.gimp_message(PyApp.mask_path)
 
+        # on first run setup Image
         if PyApp.img == None:
-
             PyApp.img = gimp.Image(1000, 1000)
-        # pdb.gimp_display_new(img)
 
+        # laod both images
         for f, name, pos in ((one_image, "Image", 1), (PyApp.mask_path, "Mask", 0)):
             PyApp.layer = pdb.gimp_file_load_layer(PyApp.img, f)
             pdb.gimp_layer_set_name(PyApp.layer, name)
@@ -104,7 +106,6 @@ class PyApp(gtk.Window):
             PyApp.first_build = False
         pdb.gimp_displays_flush()
 
-
     def get_img_list(self):
         # this func sets file list and file count
         pdb.gimp_message('start')
@@ -122,25 +123,13 @@ class PyApp(gtk.Window):
             pdb.gimp_image_remove_layer(PyApp.img,PyApp.image.layers[0])
             pdb.gimp_message('removed')
 
-
-
     def load_next_image(self,button):
         # the next button has been clicked so inciment cur_img_num by one
         pdb.gimp_message('next clicked')
         # save mask
         self.save_mask_then_remove_all()
-        # if PyApp.img != None:
-        #     pdb.gimp_message(PyApp.image.layers)
-        #     pdb.gimp_image_remove_layer(PyApp.img,PyApp.image.layers[1])
-        #     # pdb.gimp_message(PyApp.layer)
-        #     # pdb.gimp_message(PyApp.img)
-        #     pdb.gimp_file_save(PyApp.img, PyApp.layer, PyApp.mask_path, '?')
-        #     pdb.gimp_message('saved')
-        #     pdb.gimp_image_remove_layer(PyApp.img,PyApp.image.layers[0])
-        #     pdb.gimp_message('removed')
 
-        pdb.gimp_message(PyApp.cur_img_num)
-        if PyApp.cur_img_num < PyApp.image_count-1:
+        if PyApp.cur_img_num < PyApp.image_count:
             # self.remove_image()
             PyApp.cur_img_num+=1
             pdb.gimp_message('next image')
@@ -161,13 +150,12 @@ class PyApp(gtk.Window):
             pdb.gimp_message('no more images')
         pdb.gimp_message(PyApp.cur_img_num)
 
-
 def flip_images():
 
     PyApp()
     gtk.main()
 
-
+# gimp rego info
 register(
          "flip_images",
          "flip through a folder of images",
@@ -179,5 +167,4 @@ register(
          [],
          [],
          flip_images)
-
 main()
