@@ -11,7 +11,6 @@ class PyApp(gtk.Window):
     cur_img_num = -1
     image_count = 0
     image_list = []
-    image_count = 0
     mask_path = ''
     image_dir = ''
     mask_dir = ''
@@ -129,12 +128,14 @@ class PyApp(gtk.Window):
         # save mask
         self.save_mask_then_remove_all()
 
-        if PyApp.cur_img_num < PyApp.image_count:
+        if PyApp.cur_img_num < PyApp.image_count-1:
             # self.remove_image()
             PyApp.cur_img_num+=1
             pdb.gimp_message('next image')
             self.load_image()
         else:
+            # PyApp.cur_img_num = PyApp.image_count+1
+            self.load_image()
             pdb.gimp_message('no more images')
         pdb.gimp_message(PyApp.cur_img_num)
 
@@ -142,11 +143,13 @@ class PyApp(gtk.Window):
     def load_prev_image(self,button):
         pdb.gimp_message('prev clicked')
         self.save_mask_then_remove_all()
-        if PyApp.cur_img_num != 0:
+        if PyApp.cur_img_num > 0:
             PyApp.cur_img_num-=1
             pdb.gimp_message('prev image')
             self.load_image()
         else:
+            PyApp.cur_img_num = 0
+            self.load_image()
             pdb.gimp_message('no more images')
         pdb.gimp_message(PyApp.cur_img_num)
 
