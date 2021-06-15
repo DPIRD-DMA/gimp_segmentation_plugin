@@ -1,4 +1,3 @@
-from __future__ import division
 # helpfull links
 # https://stackoverflow.com/questions/58343148/gimp-python-plugin-to-load-2-images-as-layers
 
@@ -9,41 +8,34 @@ import gtk,gobject
 #
 
 def progress_timeout(pbobj):
-    if PyApp.cur_img_num > 0:
-
-        # new_val = pbobj.pb.get_fraction() + 0.01
-        new_val = PyApp.cur_img_num/PyApp.image_count
-        # pdb.gimp_message(PyApp.cur_img_num)
-        # pdb.gimp_message(PyApp.image_count)
-        # pdb.gimp_message(new_val)
-        # pdb.gimp_message('done')
+    if PyApp.cur_img_num > -1:
+        new_val = float(PyApp.cur_img_num+1)/float(PyApp.image_count)
         pbobj.pb.set_fraction(new_val)
-        pbobj.pb.set_text(str(new_val*100)+" % completed")
+        pbobj.pb.set_text(str(PyApp.cur_img_num+1)+' out of ' + str(PyApp.image_count))
     return True
 
 class PyApp(gtk.Window):
-    cur_img_num = -1
-    image_count = 0
-    image_list = []
-    mask_path = ''
-    image_dir = ''
-    mask_dir = ''
+    # set a bunch of globals, this is a bit lazy but it works
+    cur_img_num = -1 # the currnet displayed image
+    image_count = 0 # the amount of images in images folder
+    image_list = [] # the list of images from the images folder
+    mask_path = '' # path to current mask file
+    image_dir = '' # directory of images
+    mask_dir = '' # directory of mask folder
     img = None
     layer = None
     image = None
-    first_build = True
-    first_img_load = True
-
-
-
+    first_build = True # used to know if we need to set up a canvas
+    first_img_load = True # used to not try to save on first click
 
     def __init__(self):
         super(PyApp, self).__init__()
+        # build gtk interface
         self.set_title("Image flipper")
         self.set_size_request(240, 110)
         self.set_position(gtk.WIN_POS_CENTER)
         self.set_keep_above(True)
-
+        # build buttons
         btn_next = gtk.Button("Next")
         btn_prev = gtk.Button("Previous")
 
@@ -54,32 +46,29 @@ class PyApp(gtk.Window):
         btn_prev.set_size_request(80, 40)
 
         fixed = gtk.Fixed()
-
+        # building progress bar
         self.pb = gtk.ProgressBar()
+        self.pb.set_size_request(220, 30)
         self.pb.set_text("Progress")
         self.pb.set_fraction(0.0)
+
     	fixed.put(self.pb,10,70)
         self.timer = gobject.timeout_add (100, progress_timeout, self)
-        # self.connect("destroy", gtk.main_quit)
-        # self.show_all()
 
-
-
-        fixed.put(btn_next, 140, 20)
-        fixed.put(btn_prev, 20, 20)
-
-
+        fixed.put(btn_next, 150, 20)
+        fixed.put(btn_prev, 10, 20)
 
         self.connect("destroy", gtk.main_quit)
         self.add(fixed)
         self.show_all()
 
+        # force two popups on start to select images and mask folder
         PyApp.image_dir = self.open_file(open_title='Select image folder')
-        pdb.gimp_message(PyApp.image_dir)
-        pdb.gimp_message('done')
+        # get image list from selected folder
         self.get_img_list()
         PyApp.mask_dir = self.open_file(open_title='Select coloured mask folder')
 
+# func to open folder selection dialog box
     def open_file(self,open_title):
         dlg = gtk.FileChooserDialog(open_title,
         None, gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
