@@ -14,14 +14,15 @@ def progress_timeout(pbobj):
         pbobj.pb.set_text(str(PyApp.cur_img_num+1)+' out of ' + str(PyApp.image_count))
     return True
 
+
 class PyApp(gtk.Window):
     # set a bunch of globals, this is a bit lazy but it works
     cur_img_num = -1 # the currnet displayed image
     image_count = 0 # the amount of images in images folder
     image_list = [] # the list of images from the images folder
     mask_path = '' # path to current mask file
-    image_dir = '' # directory of images
-    mask_dir = '' # directory of mask folder
+    image_dir = None # directory of images
+    mask_dir = None # directory of mask folder
     img = None
     layer = None
     image = None
@@ -41,6 +42,10 @@ class PyApp(gtk.Window):
 
         btn_next.connect("clicked", self.load_next_image)
         btn_prev.connect("clicked", self.load_prev_image)
+
+        btn_next.set_sensitive(False)
+        btn_prev.set_sensitive(False)
+
 
         btn_next.set_size_request(80, 40)
         btn_prev.set_size_request(80, 40)
@@ -67,6 +72,10 @@ class PyApp(gtk.Window):
         # get image list from selected folder
         self.get_img_list()
         PyApp.mask_dir = self.open_file(open_title='Select coloured mask folder')
+
+        btn_next.set_sensitive(True)
+        btn_prev.set_sensitive(True)
+
 
 # func to open folder selection dialog box
     def open_file(self,open_title):
