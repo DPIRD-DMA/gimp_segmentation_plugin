@@ -77,18 +77,16 @@ class PyApp(gtk.Window):
         dlg.destroy()
         return dir
 
-
+# funs to load both image and mask
     def load_image(self):
+
         one_image = PyApp.image_list[PyApp.cur_img_num]
-
-        pdb.gimp_message('one'+one_image)
-
         file_name = os.path.basename(one_image)
 
-        pdb.gimp_message(PyApp.mask_dir)
+        # pdb.gimp_message(PyApp.mask_dir)
 
         PyApp.mask_path = os.path.join(PyApp.mask_dir,file_name)
-        pdb.gimp_message(PyApp.mask_path)
+        # pdb.gimp_message(PyApp.mask_path)
 
         # on first run setup Image
         if PyApp.img == None:
@@ -99,32 +97,31 @@ class PyApp(gtk.Window):
             PyApp.layer = pdb.gimp_file_load_layer(PyApp.img, f)
             pdb.gimp_layer_set_name(PyApp.layer, name)
             pdb.gimp_image_insert_layer(PyApp.img, PyApp.layer, None, pos)
-            # pdb.gimp_message(img.layers)
-        pdb.gimp_message('trim')
-        # pdb.gimp_message(PyApp.image)
+
+        # set opacity of mask
         PyApp.image = gimp.image_list()[0]
-        pdb.gimp_message(PyApp.image)
         active_layer = pdb.gimp_image_get_active_layer(PyApp.image)
         pdb.gimp_layer_set_opacity(active_layer, 60)
 
-        width = active_layer.width
-        height = active_layer.height
-
+        # resize canvas if image is not 1000x1000
         pdb.gimp_image_resize_to_layers(PyApp.image)
-
+        # make display on first run
         if PyApp.first_build == True:
             pdb.gimp_display_new(PyApp.img)
             PyApp.first_build = False
+        # refresh image
         pdb.gimp_displays_flush()
 
+# this func sets file list and file count
     def get_img_list(self):
-        # this func sets file list and file count
-        pdb.gimp_message('start')
+        # pdb.gimp_message('start')
         PyApp.image_list = glob.glob(PyApp.image_dir+'/*')
-        pdb.gimp_message('got list')
+        # pdb.gimp_message('got list')
         PyApp.image_count = len(PyApp.image_list)
-        pdb.gimp_message('image count '+str(PyApp.image_count))
+        # pdb.gimp_message('image count '+str(PyApp.image_count))
 
+# this func will save the mask file, then remove all the layers,
+# we force index mode to
     def save_mask_then_remove_all(self):
         if PyApp.img != None:
             # pdb.gimp_message(PyApp.image.layers)
@@ -143,34 +140,34 @@ class PyApp(gtk.Window):
 
     def load_next_image(self,button):
         # the next button has been clicked so inciment cur_img_num by one
-        pdb.gimp_message('next clicked')
+        # pdb.gimp_message('next clicked')
         # save mask
         self.save_mask_then_remove_all()
 
         if PyApp.cur_img_num < PyApp.image_count-1:
             # self.remove_image()
             PyApp.cur_img_num+=1
-            pdb.gimp_message('next image')
+            # pdb.gimp_message('next image')
             self.load_image()
         else:
             # PyApp.cur_img_num = PyApp.image_count+1
             self.load_image()
             pdb.gimp_message('no more images')
-        pdb.gimp_message(PyApp.cur_img_num)
+        # pdb.gimp_message(PyApp.cur_img_num)
 
 
     def load_prev_image(self,button):
-        pdb.gimp_message('prev clicked')
+        # pdb.gimp_message('prev clicked')
         self.save_mask_then_remove_all()
         if PyApp.cur_img_num > 0:
             PyApp.cur_img_num-=1
-            pdb.gimp_message('prev image')
+            # pdb.gimp_message('prev image')
             self.load_image()
         else:
             PyApp.cur_img_num = 0
             self.load_image()
             pdb.gimp_message('no more images')
-        pdb.gimp_message(PyApp.cur_img_num)
+        # pdb.gimp_message(PyApp.cur_img_num)
 
 def flip_images():
 
