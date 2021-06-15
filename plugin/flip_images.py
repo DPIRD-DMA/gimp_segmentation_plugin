@@ -1,14 +1,9 @@
 # helpfull links
 # https://stackoverflow.com/questions/58343148/gimp-python-plugin-to-load-2-images-as-layers
-
 from gimpfu import *
 import glob
 import os
 import gtk,gobject
-#
-
-
-
 
 class PyApp(gtk.Window):
     # set a bunch of globals, this is a bit lazy but it works
@@ -28,7 +23,7 @@ class PyApp(gtk.Window):
         super(PyApp, self).__init__()
         # build gtk interface
         self.set_title("Image flipper")
-        self.set_size_request(240, 110)
+        self.set_size_request(240, 100)
         self.set_position(gtk.WIN_POS_CENTER)
         self.set_keep_above(True)
         # build buttons
@@ -52,14 +47,10 @@ class PyApp(gtk.Window):
         self.pb.set_text("Progress")
         self.pb.set_fraction(0.0)
 
-    	fixed.put(self.pb,10,70)
+    	fixed.put(self.pb,10,60)
 
-
-
-        # self.timer = gobject.timeout_add (100, progress_timeout, self)
-
-        fixed.put(btn_next, 150, 20)
-        fixed.put(btn_prev, 10, 20)
+        fixed.put(btn_next, 150, 10)
+        fixed.put(btn_prev, 10, 10)
 
         self.connect("destroy", gtk.main_quit)
         self.add(fixed)
@@ -76,7 +67,6 @@ class PyApp(gtk.Window):
 
         self.load_image()
         self.progress_timeout()
-
 
     def progress_timeout(self):
         pdb.gimp_message('checked')
@@ -100,10 +90,7 @@ class PyApp(gtk.Window):
         one_image = PyApp.image_list[PyApp.cur_img_num]
         file_name = os.path.basename(one_image)
 
-        # pdb.gimp_message(PyApp.mask_dir)
-
         PyApp.mask_path = os.path.join(PyApp.mask_dir,file_name)
-        # pdb.gimp_message(PyApp.mask_path)
 
         # on first run setup Image
         if PyApp.img == None:
@@ -157,25 +144,19 @@ class PyApp(gtk.Window):
 
     def load_next_image(self,button):
         # the next button has been clicked so inciment cur_img_num by one
-        # pdb.gimp_message('next clicked')
-        # save mask
         self.save_mask_then_remove_all()
-
         if PyApp.cur_img_num < PyApp.image_count-1:
-            # self.remove_image()
             PyApp.cur_img_num+=1
             # pdb.gimp_message('next image')
             self.load_image()
             self.progress_timeout()
         else:
-            # PyApp.cur_img_num = PyApp.image_count+1
+            # wrap arround to start
+            PyApp.cur_img_num = 0
             self.load_image()
-            pdb.gimp_message('no more images')
-        # pdb.gimp_message(PyApp.cur_img_num)
-
+            self.progress_timeout()
 
     def load_prev_image(self,button):
-        # pdb.gimp_message('prev clicked')
         self.save_mask_then_remove_all()
         if PyApp.cur_img_num > 0:
             PyApp.cur_img_num-=1
@@ -183,13 +164,13 @@ class PyApp(gtk.Window):
             self.load_image()
             self.progress_timeout()
         else:
-            PyApp.cur_img_num = 0
+            # wrap arround to the end
+            PyApp.cur_img_num = PyApp.image_count-1
             self.load_image()
-            pdb.gimp_message('no more images')
-        # pdb.gimp_message(PyApp.cur_img_num)
+            self.progress_timeout()
+            # pdb.gimp_message('no more images')
 
 def flip_images():
-
     PyApp()
     gtk.main()
 
