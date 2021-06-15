@@ -7,17 +7,12 @@ import os
 import gtk,gobject
 #
 
-def progress_timeout(pbobj):
-    if PyApp.cur_img_num > -1:
-        new_val = float(PyApp.cur_img_num+1)/float(PyApp.image_count)
-        pbobj.pb.set_fraction(new_val)
-        pbobj.pb.set_text(str(PyApp.cur_img_num+1)+' out of ' + str(PyApp.image_count))
-    return True
+
 
 
 class PyApp(gtk.Window):
     # set a bunch of globals, this is a bit lazy but it works
-    cur_img_num = -1 # the currnet displayed image
+    cur_img_num = 0 # the currnet displayed image
     image_count = 0 # the amount of images in images folder
     image_list = [] # the list of images from the images folder
     mask_path = '' # path to current mask file
@@ -58,7 +53,10 @@ class PyApp(gtk.Window):
         self.pb.set_fraction(0.0)
 
     	fixed.put(self.pb,10,70)
-        self.timer = gobject.timeout_add (100, progress_timeout, self)
+
+
+
+        # self.timer = gobject.timeout_add (100, progress_timeout, self)
 
         fixed.put(btn_next, 150, 20)
         fixed.put(btn_prev, 10, 20)
@@ -76,6 +74,16 @@ class PyApp(gtk.Window):
         btn_next.set_sensitive(True)
         btn_prev.set_sensitive(True)
 
+        self.load_image()
+        self.progress_timeout()
+
+
+    def progress_timeout(self):
+        pdb.gimp_message('checked')
+        new_val = float(PyApp.cur_img_num+1)/float(PyApp.image_count)
+        self.pb.set_fraction(new_val)
+        self.pb.set_text(str(PyApp.cur_img_num+1)+' out of ' + str(PyApp.image_count))
+        return True
 
 # func to open folder selection dialog box
     def open_file(self,open_title):
@@ -158,6 +166,7 @@ class PyApp(gtk.Window):
             PyApp.cur_img_num+=1
             # pdb.gimp_message('next image')
             self.load_image()
+            self.progress_timeout()
         else:
             # PyApp.cur_img_num = PyApp.image_count+1
             self.load_image()
@@ -172,6 +181,7 @@ class PyApp(gtk.Window):
             PyApp.cur_img_num-=1
             # pdb.gimp_message('prev image')
             self.load_image()
+            self.progress_timeout()
         else:
             PyApp.cur_img_num = 0
             self.load_image()
