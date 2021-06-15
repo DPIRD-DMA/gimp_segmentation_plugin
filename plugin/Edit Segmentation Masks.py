@@ -178,20 +178,20 @@ class PyApp(gtk.Window):
             self.progress_timeout()
             # pdb.gimp_message('no more images')
 
-def flip_images():
+def ESM():
     PyApp()
     gtk.main()
 
-# gimp rego info
+# GIMP rego info
 register(
-         "flip_images",
-         "flip through a folder of images",
-         "flip through a folder of images",
+         "ESM",
+         "Open images and mask files for rapid edits",
+         "Open images and mask files for rapid edits",
          "Nick Wright", "Nick Wright",
          "2021",
-         "<Toolbox>/File/Flip through images",
+         "<Toolbox>/Tools/Edit Segmentation Masks",
          "",
          [],
          [],
-         flip_images)
+         ESM)
 main()
