@@ -1,41 +1,30 @@
-# helpfull links
-# https://stackoverflow.com/questions/58343148/gimp-python-plugin-to-load-2-images-as-layers
 from gimpfu import *
 import glob
 import os
 import gtk,gobject
 
 class PyApp(gtk.Window):
-    # set a bunch of globals, this is a bit lazy but it works
     cur_img_num = 0 # the currnet displayed image
-    image_count = 0 # the amount of images in images folder
-    image_list = [] # the list of images from the images folder
-    mask_path = '' # path to current mask file
-    image_dir = None # directory of images
-    mask_dir = None # directory of mask folder
     img = None
-    layer = None
-    image = None
     first_build = True # used to know if we need to set up a canvas
-    first_img_load = True # used to not try to save on first click
 
     def __init__(self):
         super(PyApp, self).__init__()
+
         # build gtk interface
         self.set_title("Image flipper")
         self.set_size_request(240, 100)
         self.set_position(gtk.WIN_POS_CENTER)
-        self.set_keep_above(True)
+
         # build buttons
         btn_next = gtk.Button("Next")
         btn_prev = gtk.Button("Previous")
 
         btn_next.connect("clicked", self.load_next_image)
         btn_prev.connect("clicked", self.load_prev_image)
-
+        # grey out buttons
         btn_next.set_sensitive(False)
         btn_prev.set_sensitive(False)
-
 
         btn_next.set_size_request(80, 40)
         btn_prev.set_size_request(80, 40)
@@ -46,30 +35,47 @@ class PyApp(gtk.Window):
         self.pb.set_size_request(220, 30)
         self.pb.set_text("Progress")
         self.pb.set_fraction(0.0)
-
-    	fixed.put(self.pb,10,60)
-
+        # possition things
+        fixed.put(self.pb,10,60)
         fixed.put(btn_next, 150, 10)
         fixed.put(btn_prev, 10, 10)
 
         self.connect("destroy", gtk.main_quit)
         self.add(fixed)
         self.show_all()
-
+        self.set_keep_above(True)
         # force two popups on start to select images and mask folder
         PyApp.image_dir = self.open_file(open_title='Select image folder')
         # get image list from selected folder
         self.get_img_list()
         PyApp.mask_dir = self.open_file(open_title='Select coloured mask folder')
-
+        # activate buttons
         btn_next.set_sensitive(True)
         btn_prev.set_sensitive(True)
-
+        # build and load palette
+        self.laod_palette()
+        # load first image
         self.load_image()
+        # update progress bar
         self.progress_timeout()
 
+    def laod_palette(self):
+        # find the folder with the palette file, this was made by the Jyputer script
+        folder = os.path.dirname(PyApp.image_dir)
+        # build fullpath
+        palette_path = os.path.join(folder,'Palette.txt')
+        # read in file
+        with open(palette_path) as f:
+            palette_lines = f.readlines()
+        # place empty pallete into the GIMP interface
+        PyApp.actual_name = pdb.gimp_palette_new('Image Segmentation')
+        # place each colour into the pallete
+        for colour in palette_lines:
+            # convert string array into tuple
+            rgb_colour = (tuple([int(x.strip()) for x in colour.split(' ')]))
+            pdb.gimp_palette_add_entry(PyApp.actual_name,"Color x",rgb_colour)
+
     def progress_timeout(self):
-        pdb.gimp_message('checked')
         new_val = float(PyApp.cur_img_num+1)/float(PyApp.image_count)
         self.pb.set_fraction(new_val)
         self.pb.set_text(str(PyApp.cur_img_num+1)+' out of ' + str(PyApp.image_count))
@@ -79,6 +85,8 @@ class PyApp(gtk.Window):
     def open_file(self,open_title):
         dlg = gtk.FileChooserDialog(open_title,
         None, gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+        dlg.show_all()
+        dlg.set_keep_above(True)
         response = dlg.run()
         dir = dlg.get_filename()
         dlg.destroy()
@@ -132,7 +140,7 @@ class PyApp(gtk.Window):
             # remove background image from image
             pdb.gimp_image_remove_layer(PyApp.img,PyApp.image.layers[1])
             # foceing into indexed colour mode to limit colours
-            pdb.gimp_image_convert_indexed(PyApp.img, NO_DITHER, 4, 20, FALSE, FALSE, "Image Segmentation Palette.txt")
+            pdb.gimp_image_convert_indexed(PyApp.img, NO_DITHER, 4, 20, FALSE, FALSE, PyApp.actual_name)
             # convert back into RGB to save it out
             pdb.gimp_image_convert_rgb(PyApp.image)
             # save mask

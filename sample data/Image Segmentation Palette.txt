@@ -1,6 +1,0 @@
-GIMP Palette
-Name: Image Segmentation Classes
-Columns: 0
-#
-230 25 75
-60 180 75
