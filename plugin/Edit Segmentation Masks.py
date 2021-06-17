@@ -12,8 +12,8 @@ class PyApp(gtk.Window):
         super(PyApp, self).__init__()
 
         # build gtk interface
-        self.set_title("Image flipper")
-        self.set_size_request(240, 100)
+        self.set_title("Edit Masks")
+        self.set_size_request(200, 100)
         self.set_position(gtk.WIN_POS_CENTER)
 
         # build buttons
@@ -32,15 +32,17 @@ class PyApp(gtk.Window):
         fixed = gtk.Fixed()
         # building progress bar
         self.pb = gtk.ProgressBar()
-        self.pb.set_size_request(220, 30)
+        self.pb.set_size_request(180, 30)
         self.pb.set_text("Progress")
         self.pb.set_fraction(0.0)
         # possition things
         fixed.put(self.pb,10,60)
-        fixed.put(btn_next, 150, 10)
+        fixed.put(btn_next, 110, 10)
         fixed.put(btn_prev, 10, 10)
 
-        self.connect("destroy", gtk.main_quit)
+        # self.connect("destroy", gtk.main_quit)
+        self.connect('destroy', self.finsh)
+
         self.add(fixed)
         self.show_all()
         self.set_keep_above(True)
@@ -119,7 +121,7 @@ class PyApp(gtk.Window):
         pdb.gimp_image_resize_to_layers(PyApp.image)
         # make display on first run
         if PyApp.first_build == True:
-            pdb.gimp_display_new(PyApp.img)
+            PyApp.display_name = pdb.gimp_display_new(PyApp.img)
             PyApp.first_build = False
         # refresh image
         pdb.gimp_displays_flush()
@@ -177,6 +179,12 @@ class PyApp(gtk.Window):
             self.load_image()
             self.progress_timeout()
             # pdb.gimp_message('no more images')
+    def finsh(self,button):
+        self.save_mask_then_remove_all()
+        pdb.gimp_palette_delete(PyApp.actual_name)
+        pdb.gimp_displays_flush()
+        pdb.gimp_display_delete(PyApp.display_name)
+        self.destroy()
 
 def ESM():
     PyApp()
