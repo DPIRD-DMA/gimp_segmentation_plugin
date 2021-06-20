@@ -72,10 +72,12 @@ class PyApp(gtk.Window):
         # place empty pallete into the GIMP interface
         PyApp.actual_name = pdb.gimp_palette_new('Image Segmentation')
         # place each colour into the pallete
-        for colour in palette_lines:
+        for name_colour in palette_lines:
             # convert string array into tuple
+            name,colour = name_colour.split("_")
+            colour = colour.replace("[","").replace("]","").replace(',','')
             rgb_colour = (tuple([int(x.strip()) for x in colour.split(' ')]))
-            pdb.gimp_palette_add_entry(PyApp.actual_name,"Color x",rgb_colour)
+            pdb.gimp_palette_add_entry(PyApp.actual_name,name,rgb_colour)
 
     def progress_timeout(self):
         new_val = float(PyApp.cur_img_num+1)/float(PyApp.image_count)
